@@ -1,0 +1,167 @@
+/* One course order card on Edit Organization Course: items (read-only) + payment fields.
+   globals.css forces `* { font-size: 15px !important }` and 15px form text, so the smaller
+   sizes here carry !important on a doubled class. */
+
+.card {
+  border: 1px solid #e3e8ea;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+/* Payment fields only (Edit Organization Course for one order): no card frame. */
+.plain { background: transparent; }
+
+.plain .fields { padding: 2px 20px 4px; }
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: #f6f9f9;
+  border-bottom: 1px solid #e8eeee;
+}
+
+.headLeft {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+}
+
+.orderNo.orderNo {
+  font-size: 14px !important;
+  font-weight: 700;
+  color: #12302f;
+}
+
+.orderMeta.orderMeta {
+  font-size: 12.5px !important;
+  color: #6b7f7f;
+}
+
+.total.total {
+  font-size: 16px !important;
+  font-weight: 800;
+  color: #0b5f5f;
+  font-variant-numeric: tabular-nums;
+}
+
+.items {
+  list-style: none;
+  margin: 0;
+  padding: 8px 16px;
+  border-bottom: 1px solid #f0f3f3;
+}
+
+.items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+}
+
+.itemTitle.itemTitle {
+  font-size: 13.5px !important;
+  font-weight: 600;
+  color: #1f2937;
+  overflow-wrap: anywhere;
+}
+
+.itemCalc.itemCalc {
+  font-size: 13px !important;
+  color: #4b5d5d;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: minmax(0, 260px) minmax(0, 1fr) auto;
+  gap: 12px 16px;
+  align-items: start;
+  padding: 12px 16px 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.label.label {
+  margin: 0;
+  font-weight: 600;
+  color: #374151;
+}
+
+.req { color: #dc2626; }
+
+/* globals.css draws the dropdown arrow and border; size and padding are set here. */
+.select {
+  width: 100%;
+  height: 40px;
+  margin: 0;
+  padding: 0 36px 0 12px;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 80px;
+  margin: 0;
+  padding: 9px 12px;
+  border: 1.5px solid #e2e9ec;
+  border-radius: 9px;
+  background: #fff;
+  color: #12302f;
+  line-height: 1.5;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: #0b7b7b;
+  box-shadow: 0 0 0 3px rgba(11, 123, 123, 0.12);
+}
+
+.select[aria-invalid="true"],
+.textarea[aria-invalid="true"] { border-color: #dc2626 !important; }
+
+.error.error {
+  margin: 0;
+  font-size: 12.5px !important;
+  color: #b91c1c;
+}
+
+/* Lines the button up with the inputs (below the labels). */
+.actions {
+  padding-top: 27px;
+}
+
+.saveBtn {
+  height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #047279 0%, #299c8f 100%);
+  color: #fff;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.saveBtn:hover:not(:disabled) { opacity: 0.9; }
+.saveBtn:focus-visible { outline: 2px solid #0b5f5f; outline-offset: 2px; }
+.saveBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+@media (max-width: 860px) {
+  .fields { grid-template-columns: 1fr; }
+  .actions { padding-top: 0; }
+  .items li { flex-direction: column; gap: 2px; }
+}

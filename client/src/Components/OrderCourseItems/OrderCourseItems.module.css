@@ -1,0 +1,78 @@
+/* "Purchased Courses" table on the order detail pages. */
+.wrap {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #e8eeee;
+}
+
+/* Doubled class + !important: globals.css forces h2 to 20px. */
+.title.title {
+  margin: 0 0 10px;
+  font-size: 13px !important;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #4b6060;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid #e3eaea;
+  border-radius: 10px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: #23403f;
+}
+
+.table th {
+  padding: 10px 14px;
+  background: #f6f9f9;
+  border-bottom: 1px solid #e3eaea;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #5b7272;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid #eef2f2;
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td { border-bottom: none; }
+
+.table tfoot td {
+  border-top: 1px solid #e3eaea;
+  border-bottom: none;
+  background: #fbfdfd;
+}
+
+.num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th.num { text-align: right; }
+
+.idx { width: 40px; color: #8aa0a0; }
+.course { font-weight: 600; color: #12302f; }
+.strong { font-weight: 600; }
+
+.totalLabel {
+  text-align: right;
+  font-weight: 600;
+  color: #4b6060;
+}
+
+.total {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0b5f5f;
+}

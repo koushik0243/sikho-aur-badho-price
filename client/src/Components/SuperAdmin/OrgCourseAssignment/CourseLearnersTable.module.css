@@ -1,0 +1,350 @@
+/* Add / Edit Organization Course: card, organization row, course table, footer.
+   globals.css forces `* { font-size: 15px !important }`, so every font size here carries
+   !important (a class beats `*`). Table header cells keep the app-wide 12px list-header
+   size from globals.css (`table th`). */
+
+/* ── Card ───────────────────────────────────────────── */
+.card {
+  max-width: 1100px;
+  background: #fff;
+  border: 1px solid #e3e8ea;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(16, 40, 40, 0.04);
+  overflow: hidden;
+}
+
+/* ── Organization row ───────────────────────────────── */
+.orgRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eef1f2;
+}
+
+.orgLabel.orgLabel {
+  flex: 0 0 110px;
+  margin: 0;
+  font-size: 13px !important;
+  font-weight: 600;
+  color: #4b5d5d;
+}
+
+.req { color: #dc2626; }
+
+.orgField {
+  flex: 1;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* globals.css draws the arrow and border and sets the 15px form text; size and left padding are set here. */
+.orgField select {
+  width: 100%;
+  height: 40px;
+  margin: 0;
+  padding: 0 36px 0 12px;
+}
+
+.orgName {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid #d5e7e5;
+  border-radius: 8px;
+  background: #f3faf9;
+  color: #0b5f5f;
+  font-size: 14px !important;
+  font-weight: 600;
+}
+
+/* ── "Courses" heading ──────────────────────────────── */
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  padding: 14px 20px 10px;
+}
+
+.sectionTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sectionTitle {
+  font-size: 14px !important;
+  font-weight: 700;
+  color: #12302f;
+}
+
+.sectionMeta {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #e6f4f4;
+  color: #0b5f5f;
+  font-size: 12px !important;
+  font-weight: 600;
+}
+
+.sectionHint {
+  font-size: 12px !important;
+  color: #6b7f7f;
+}
+
+.message {
+  margin: 0 20px 16px;
+  padding: 28px 16px;
+  border: 1px dashed #dbe3e3;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 13px !important;
+  color: #6b7f7f;
+}
+
+/* ── Course table ───────────────────────────────────── */
+.scroll {
+  margin: 0 20px;
+  max-height: 440px;
+  overflow: auto;
+  border: 1px solid #e5eaeb;
+  border-radius: 8px;
+}
+
+.table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.colCheck { width: 44px; }
+.colPrice { width: 170px; }
+.colLearners { width: 160px; }
+.colCost { width: 150px; }
+
+/* Header: sticky, roomy padding so neighbouring titles never meet. */
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 10px 16px;
+  background: #f6f8f8;
+  border-bottom: 1px solid #e5eaeb;
+  text-align: left;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #5b6f6f;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 8px 16px;
+  border-bottom: 1px solid #f0f3f3;
+  vertical-align: middle;
+  font-size: 13.5px !important;
+  color: #2b3f3f;
+}
+
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr { transition: background 0.12s; }
+.table tbody tr:hover td { background: #f8fbfb; }
+.table tbody tr.rowChecked td { background: #f1f9f8; }
+
+.table th.num,
+.table td.num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th.center,
+.table td.center { text-align: center; }
+
+.table th:first-child,
+.table td:first-child { padding-right: 0; }
+
+.checkCell { width: 44px; }
+
+.check {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  vertical-align: middle;
+  accent-color: #0b7b7b;
+  cursor: pointer;
+}
+
+.check:disabled { cursor: not-allowed; }
+
+.courseName.courseName {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 13.5px !important;
+  font-weight: 600;
+  color: #12302f;
+  cursor: pointer;
+}
+
+.courseLocked.courseLocked { cursor: default; }
+.lockIcon {
+  display: inline-flex;
+  color: #9aa9a9;
+}
+
+.lockIcon svg { width: 12px; height: 12px; }
+
+.courseNote.courseNote {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px !important;
+  color: #6b7f7f;
+}
+
+.learnersInput.learnersInput {
+  width: 88px;
+  height: 32px;
+  margin: 0;
+  padding: 0 8px;
+  border: 1px solid #d3dcdc;
+  border-radius: 6px;
+  background: #fff;
+  text-align: center;
+  font-size: 14px !important;
+  font-weight: 600;
+  color: #12302f;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.learnersInput.learnersInput::placeholder { font-size: 13px !important; font-weight: 400; color: #9aa9a9; }
+
+.learnersInput.learnersInput:focus {
+  border-color: #0b7b7b;
+  box-shadow: 0 0 0 3px rgba(11, 123, 123, 0.12);
+  outline: none;
+}
+
+.learnersInput.learnersInput:disabled {
+  background: #f4f6f6;
+  border-color: #e6ebeb;
+  cursor: not-allowed;
+}
+
+.cost.cost { font-weight: 700; color: #0b5f5f; }
+.costMuted.costMuted { color: #a3b1b1; }
+
+.error.error {
+  margin: 6px 20px 0;
+  font-size: 12.5px !important;
+  color: #b91c1c;
+}
+
+.orgField .error.error { margin: 0; }
+
+/* ── Footer: figures · total cost · buttons ─────────── */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-top: 16px;
+  padding: 14px 20px;
+  border-top: 1px solid #eef1f2;
+  background: #fafcfc;
+}
+
+.stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 5px 11px;
+  border: 1px solid #e3e9e9;
+  border-radius: 999px;
+  background: #fff;
+}
+
+.statLabel.statLabel {
+  font-size: 12px !important;
+  font-weight: 600;
+  color: #6b7f7f;
+}
+
+.statValue.statValue {
+  font-size: 14px !important;
+  font-weight: 700;
+  color: #12302f;
+  font-variant-numeric: tabular-nums;
+}
+
+.statWarn { border-color: #f5d9b8; background: #fff8ef; }
+.statWarn .statValue.statValue,
+.statWarn .statLabel.statLabel { color: #b45309; }
+
+.footerRight {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  margin-left: auto;
+}
+
+.totalCost {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.15;
+}
+
+.totalCostValue.totalCostValue {
+  font-size: 20px !important;
+  font-weight: 800;
+  color: #0b5f5f;
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── Smaller screens ────────────────────────────────── */
+@media (max-width: 760px) {
+  .orgRow { flex-direction: column; align-items: stretch; gap: 6px; }
+  .orgLabel.orgLabel { flex: none; }
+  .orgField { max-width: none; }
+  .scroll { margin: 0 12px; }
+  .sectionHead, .orgRow, .footer { padding-left: 12px; padding-right: 12px; }
+  .priceCell { display: none; }
+  .colPrice { width: 0; }
+  .table { min-width: 0; }
+  .footerRight { margin-left: 0; width: 100%; justify-content: space-between; }
+  .totalCost { align-items: flex-start; }
+}

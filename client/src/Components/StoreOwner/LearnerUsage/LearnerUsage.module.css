@@ -1,0 +1,48 @@
+/* Learner Usage: level tag under the course name and the usage bar.
+   globals.css forces `* { font-size: 15px !important }`, so small sizes carry !important. */
+
+.level.level {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px !important;
+  color: #6b7f7f;
+  text-transform: capitalize;
+}
+
+.usage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+
+.usageTrack {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: #e8eeee;
+  overflow: hidden;
+}
+
+.usageFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: #0b7b7b;
+  transition: width 0.3s ease;
+}
+
+.usageFull { background: #dc2626; }
+
+.usagePct.usagePct {
+  min-width: 34px;
+  text-align: right;
+  font-size: 12px !important;
+  color: #6b7f7f;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .usageFill { transition: none; }
+}

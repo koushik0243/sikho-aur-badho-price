@@ -1,0 +1,131 @@
+/* Store owner order detail (ViewOrder + OrderItemsCard + OrderPaymentCard).
+   Back button, breadcrumb and loading text come from the shared DetailKit; cards,
+   tables, pills and buttons from PageKit.
+   globals.css forces 15px text (h1 24px, h2 20px), so every other size here uses a
+   doubled class selector + !important. */
+
+.page { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+.nav { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.nav .breadcrumb.breadcrumb { margin: 0; }
+
+/* ── Summary header ──────────────────────────────────────── */
+.summary {
+  position: relative;
+  display: flex; flex-wrap: wrap; align-items: stretch; justify-content: space-between; gap: 20px;
+  padding: 22px 24px 22px 28px;
+  background: linear-gradient(135deg, #eef8f7 0%, #f8fcfc 45%, #ffffff 75%);
+  border: 1px solid #e0eded; border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(15, 60, 60, 0.04), 0 8px 24px -18px rgba(11, 123, 123, 0.35);
+  overflow: hidden;
+}
+.summary::before {
+  content: ''; position: absolute; inset: 0 auto 0 0; width: 4px;
+  background: linear-gradient(180deg, #047279 0%, #299c8f 100%);
+}
+.summaryMain { flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.eyebrow.eyebrow {
+  margin: 0; color: #0b7b7b; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  font-size: 12px !important;
+}
+.titleRow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.title { margin: 0; color: #12302f; font-weight: 800; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+
+.meta { margin: 8px 0 0; display: flex; flex-wrap: wrap; gap: 12px 32px; }
+.metaItem { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.metaLabel.metaLabel {
+  color: #6b7d7d; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+  font-size: 11.5px !important;
+}
+.metaValue.metaValue { margin: 0; color: #12302f; font-weight: 600; overflow-wrap: anywhere; }
+.metaValue.metaValue, .metaValue.metaValue * { font-size: 14.5px !important; }
+
+.amountBox {
+  flex: 0 1 260px; min-width: 0;
+  display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 4px;
+  padding: 16px 20px; text-align: right;
+  background: rgba(255, 255, 255, 0.85); border: 1px solid #d5eae8; border-radius: 12px;
+}
+.amountLabel.amountLabel {
+  color: #5f7272; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  font-size: 11.5px !important;
+}
+.amount.amount {
+  color: #0b6767; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums; overflow-wrap: anywhere;
+  font-size: 30px !important;
+}
+.amountMuted.amountMuted { color: #3d5555; }
+.invoiceBtn { margin-top: 10px; text-decoration: none; }
+.invoiceBtn svg { width: 15px; height: 15px; display: block; }
+
+/* ── Status notice (pending / failed / canceled / refunded) ─ */
+.notice { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1px solid; border-radius: 12px; }
+.noticeIcon { flex-shrink: 0; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; }
+.noticeIcon svg { width: 18px; height: 18px; }
+.noticeTitle.noticeTitle { margin: 0; color: #12302f; font-weight: 700; font-size: 14.5px !important; }
+.noticeText.noticeText { margin: 2px 0 0; color: #3d5555; line-height: 1.5; font-size: 13.5px !important; }
+.notice_warn    { background: #fffaf0; border-color: #f6e0b5; }
+.notice_warn    .noticeIcon { background: #fff0d4; color: #b45309; }
+.notice_bad     { background: #fef6f6; border-color: #f4cfcf; }
+.notice_bad     .noticeIcon { background: #fde4e4; color: #b91c1c; }
+.notice_neutral { background: #f7fafa; border-color: #dfe9e9; }
+.notice_neutral .noticeIcon { background: #eaf0f0; color: #4d6464; }
+.notice_info    { background: #f5f8ff; border-color: #d3defa; }
+.notice_info    .noticeIcon { background: #e3ebfd; color: #1d4ed8; }
+
+/* ── Items + payment columns ─────────────────────────────── */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 18px; align-items: start; }
+
+/* Items table (on top of the kit table) */
+.itemsTable thead th:first-child { width: 100%; }
+.itemTitle { display: block; color: #12302f; font-weight: 600; overflow-wrap: anywhere; }
+.itemSub.itemSub { margin-top: 3px; color: #6b7d7d; font-weight: 500; font-variant-numeric: tabular-nums; font-size: 12.5px !important; }
+.itemsTable tfoot td {
+  padding: 14px 16px; background: #f8fbfb; border-top: 1px solid #e6eded; color: #12302f; vertical-align: middle;
+  font-size: 14px !important;
+}
+.itemsTable tfoot .totalLabel { font-weight: 700; }
+.itemsTable tfoot .totalAmount { color: #0b6767; font-weight: 800; font-size: 17px !important; }
+.narrowOnly { display: none; }
+
+/* Payment panel */
+.payList { margin: 0; display: flex; flex-direction: column; }
+.payRow { display: flex; flex-direction: column; gap: 5px; min-width: 0; padding: 12px 0; border-bottom: 1px solid #f1f5f5; }
+.payRow:first-child { padding-top: 0; }
+.payRow:last-child { padding-bottom: 0; border-bottom: none; }
+.payLabel.payLabel {
+  color: #6b7d7d; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+  font-size: 11.5px !important;
+}
+.payValue.payValue { margin: 0; min-width: 0; color: #12302f; font-weight: 600; overflow-wrap: anywhere; font-size: 14px !important; }
+.notes.notes { white-space: pre-wrap; font-weight: 500; color: #2b4141; font-size: 14px !important; }
+
+.copyRow { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; min-width: 0; }
+.code.code {
+  min-width: 0; padding: 4px 8px; word-break: break-all;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; color: #12302f;
+  background: #f3f8f8; border: 1px solid #e2eded; border-radius: 7px;
+  font-size: 12.5px !important;
+}
+.copyBtn { flex-shrink: 0; }
+.copyBtn:focus-visible { outline: 2px solid #0b7b7b; outline-offset: 2px; }
+.copyDone.copyDone, .copyFailed.copyFailed { font-weight: 600; font-size: 12px !important; }
+.copyDone.copyDone { color: #15803d; }
+.copyFailed.copyFailed { color: #b91c1c; }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 960px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 560px) {
+  .summary { padding: 16px 16px 16px 20px; gap: 14px; }
+  .amountBox { flex-basis: 100%; align-items: flex-start; text-align: left; padding: 14px 16px; }
+  .amount.amount { font-size: 26px !important; }
+  .meta { gap: 10px 24px; }
+  .wideOnly { display: none; }
+  .narrowOnly { display: block; }
+  .itemsTable tfoot td { padding: 12px; }
+}

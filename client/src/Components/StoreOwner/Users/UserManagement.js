@@ -1,0 +1,299 @@
+'use client';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import { selectUser } from '../../../redux/slices/authSlice';
+import apiServiceHandler from '../../../service/apiService';
+import s from "./UserManagement.module.css";
+import { kit as k, PageHeader, KpiTiles, Card, Pill, Pager, SkeletonRows, KitIcon } from '../PageKit/PageKit';
+
+const STATUS_OPTIONS = [
+  { value: 'active',    label: 'Active' },
+  { value: 'inactive',  label: 'Inactive' },
+  { value: 'suspended', label: 'Suspended' },
+];
+
+// ── Icons (content-area only) ─────────────────────────────────────
+const Icon = {
+  learners: <svg viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v1h8v-1zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-1a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v1h-3zM4.75 14.094A5.973 5.973 0 004 17v1H1v-1a3 3 0 013.75-2.906z" /></svg>,
+  active: <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>,
+  inactive: <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" /></svg>,
+  deactivated: <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524L13.477 14.89zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" /></svg>,
+  search: <svg viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" /></svg>,
+  eye: <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z" /><path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" /></svg>,
+  edit: <svg viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>,
+};
+
+// Real account-status badge — pulled directly from the users table's `status`
+// field (active/inactive/suspended/deleted), not a derived metric.
+
+const LIMIT = 10;
+const EMPTY_STATS = { total: 0, active: 0, inactive: 0, deactivated: 0, newThisMonth: 0 };
+
+// A status change moves one learner from one KPI tile to another.
+const STAT_KEY = { active: 'active', inactive: 'inactive', deactivated: 'deactivated', suspended: 'deactivated' };
+function moveStat(stats, from, to) {
+  const next = { ...stats };
+  if (STAT_KEY[from]) next[STAT_KEY[from]] = Math.max(0, next[STAT_KEY[from]] - 1);
+  if (STAT_KEY[to]) next[STAT_KEY[to]] += 1;
+  return next;
+}
+
+export default function UserManagementPage() {
+  const user = useSelector(selectUser);
+  const router = useRouter();
+
+  // One page of learners (with their course count) from the server; search and paging
+  // happen there, so a big organization never downloads every learner.
+  const [learners, setLearners] = useState([]);
+  const [matchCount, setMatchCount] = useState(0); // learners matching the search
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(EMPTY_STATS);
+  const [orgId, setOrgId] = useState(null);
+  const [page, setPage] = useState(1);
+  const requestSeq = useRef(0); // only the latest page/search request may update the table
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [statusModalLearner, setStatusModalLearner] = useState(null);
+  const [statusModalValue, setStatusModalValue] = useState('active');
+  const [savingStatus, setSavingStatus] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => { setPage(1); }, [debouncedSearch]);
+
+  function getTokenUserId() {
+    if (typeof window === 'undefined') return null;
+    try {
+      const token = localStorage.getItem('adminToken');
+      if (!token) return null;
+      const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return payload._id || null;
+    } catch { return null; }
+  }
+
+  // The owner's organization — from Redux, or from their own user record after a refresh.
+  useEffect(() => {
+    let cancelled = false;
+    const fromRedux = user?.orgId ? String(user.orgId?._id ?? user.orgId) : null;
+    const resolve = fromRedux
+      ? Promise.resolve(fromRedux)
+      : (async () => {
+          const effectiveUserId = user?._id || getTokenUserId();
+          if (!effectiveUserId) return null;
+          const userRes = await apiServiceHandler('GET', `user/admin/edit/${effectiveUserId}`);
+          const userRecord = userRes?.data ?? userRes;
+          return userRecord?.orgId ? String(userRecord.orgId?._id ?? userRecord.orgId) : null;
+        })();
+    resolve
+      .then(id => {
+        if (cancelled) return;
+        if (id) setOrgId(id);
+        else { setLearners([]); setLoading(false); }
+      })
+      .catch(() => { if (!cancelled) { setLearners([]); setLoading(false); } });
+    return () => { cancelled = true; };
+  }, [user?._id, user?.orgId]);
+
+  const loadLearners = useCallback(async () => {
+    if (!orgId) return;
+    const seq = ++requestSeq.current;
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ page: String(page), limit: String(LIMIT), t: String(Date.now()) });
+      if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim());
+      const res = await apiServiceHandler('GET', `user/admin/org-learners/page?${params.toString()}`);
+      if (seq !== requestSeq.current) return;
+      setLearners(Array.isArray(res?.data) ? res.data : []);
+      setMatchCount(Number(res?.total) || 0);
+      setStats({ ...EMPTY_STATS, ...(res?.stats || {}) });
+    } catch {
+      if (seq !== requestSeq.current) return;
+      setLearners([]);
+      setMatchCount(0);
+      toast.warning('Could not load learners. Please refresh the page.');
+    } finally {
+      if (seq === requestSeq.current) setLoading(false);
+    }
+  }, [orgId, page, debouncedSearch]);
+
+  useEffect(() => { loadLearners(); }, [loadLearners]);
+
+  function formatLastActive(dateStr) {
+    if (!dateStr) return 'Today';
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diff = Math.floor((now - d) / 86400000);
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Yesterday';
+    return `${diff}d ago`;
+  }
+
+  function getInitials(name) {
+    if (!name) return '?';
+    return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  }
+
+  function openStatusModal(learner) {
+    setStatusModalLearner(learner);
+    setStatusModalValue((learner.status || 'active').toLowerCase());
+  }
+
+  function closeStatusModal() {
+    if (savingStatus) return;
+    setStatusModalLearner(null);
+  }
+
+  async function handleSaveStatus() {
+    if (!statusModalLearner) return;
+    setSavingStatus(true);
+    try {
+      await apiServiceHandler('PUT', `user/admin/update/${statusModalLearner._id}`, { status: statusModalValue });
+      const previous = (statusModalLearner.status || 'active').toLowerCase();
+      setLearners(prev => prev.map(u => u._id === statusModalLearner._id ? { ...u, status: statusModalValue } : u));
+      setStats(prev => moveStat(prev, previous, statusModalValue));
+      toast.success('Status updated.');
+      setStatusModalLearner(null);
+    } catch (err) {
+      toast.warning(err?.message || 'Failed to update status. Please try again.');
+    } finally {
+      setSavingStatus(false);
+    }
+  }
+
+  const pagedLearners = learners;
+  const displayStats  = stats;
+
+  // Real, per-org growth/share figures, counted by the server over all of this store's
+  // learners (not just the page shown).
+  const newThisMonth = stats.newThisMonth;
+  const pctOfTotal = (n) => displayStats.total ? Math.round((n / displayStats.total) * 100) : 0;
+  const activePct      = pctOfTotal(displayStats.active);
+  const inactivePct    = pctOfTotal(displayStats.inactive);
+  const deactivatedPct = pctOfTotal(displayStats.deactivated);
+
+  const STATUS_TONE = { active: 'good', inactive: 'bad', deactivated: 'bad' }; // active green, inactive red
+
+  return (
+    <div className={k.page}>
+      <PageHeader
+        title="Users"
+        sub="Every learner in your organisation — search, open a learner, edit details or change their access."
+        actions={<button className={k.btnPrimary} onClick={() => router.push('/storeowner/add-learner')}>+ Add Learner</button>}
+      />
+
+      <KpiTiles items={[
+        { label: 'Total learners', value: loading ? '—' : displayStats.total, icon: KitIcon.users,
+          hint: loading ? '' : newThisMonth > 0 ? `↑ ${newThisMonth} this month` : 'No new learners this month' },
+        { label: 'Active',      value: loading ? '—' : displayStats.active,      icon: KitIcon.check, tone: 'good', hint: loading ? '' : `${activePct}% of total · can log in` },
+        { label: 'Inactive',    value: loading ? '—' : displayStats.inactive,    icon: KitIcon.clock, tone: displayStats.inactive ? 'warn' : '', hint: loading ? '' : `${inactivePct}% of total` },
+        { label: 'Deactivated', value: loading ? '—' : displayStats.deactivated, icon: KitIcon.x,     tone: displayStats.deactivated ? 'bad' : '', hint: loading ? '' : `${deactivatedPct}% of total` },
+      ]} />
+
+      <Card title="All learners" meta={!loading && <Pill tone="neutral">{matchCount} learner{matchCount !== 1 ? 's' : ''}</Pill>} flush>
+        <div className={k.toolbar} role="search" aria-label="Search learners">
+          <label className={k.search}>
+            <span className={k.srOnly}>Search learners</span>
+            {KitIcon.search}
+            <input className={k.input} type="text" placeholder="Search by name, email or WhatsApp no…"
+              value={search} onChange={e => setSearch(e.target.value)} />
+          </label>
+        </div>
+
+        <div className={k.tableWrap}>
+          <table className={k.table}>
+            <thead>
+              <tr>
+                <th>Learner</th>
+                <th>WhatsApp no</th>
+                <th className={k.center}>Courses</th>
+                <th>Last active</th>
+                <th>Status</th>
+                <th className={k.num}><span className={k.srOnly}>Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? <SkeletonRows cols={6} /> : pagedLearners.length === 0 ? (
+                <tr><td colSpan={6} className={k.empty}>{debouncedSearch ? 'No learners match your search.' : 'No learners yet.'}</td></tr>
+              ) : pagedLearners.map(learner => {
+                const realStatus = (learner.status || 'active').toLowerCase();
+                const name = learner.name || learner.email;
+                return (
+                  <tr key={learner._id}>
+                    <td>
+                      <div className={s.nameCell}>
+                        <div className={s.avatar} aria-hidden="true">{getInitials(learner.name)}</div>
+                        <div className={s.nameText}>
+                          <span className={k.strong}>{name}</span>
+                          <span className={s.emailText}>{learner.email}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className={k.muted}>{learner.whatsapp_no || '—'}</td>
+                    <td className={k.center}><span className={s.courseCount}>{learner.courseCount ?? 0}</span></td>
+                    <td className={k.muted}>{formatLastActive(learner.lastActive || learner.last_active)}</td>
+                    <td>
+                      <button type="button" className={s.statusBtn} onClick={() => openStatusModal(learner)}
+                        title="Change status" aria-label={`Status: ${realStatus}. Change status for ${name}`}>
+                        <Pill tone={STATUS_TONE[realStatus] || 'neutral'}>{realStatus}</Pill>
+                        <svg className={s.statusCaret} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                      </button>
+                    </td>
+                    <td>
+                      <div className={k.actions}>
+                        <button data-action="view" className={k.iconBtn} title="View learner" aria-label={`View ${name}`} onClick={() => router.push(`/storeowner/users/${learner._id}`)}>
+                          {KitIcon.eye}
+                        </button>
+                        <button data-action="edit" className={k.iconBtn} title="Edit learner" aria-label={`Edit ${name}`} onClick={() => router.push(`/storeowner/users/${learner._id}/edit`)}>
+                          {Icon.edit}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {!loading && <Pager page={page} pageSize={LIMIT} total={matchCount} onPage={setPage} />}
+      </Card>
+
+      {/* ── Update status modal ── */}
+      {statusModalLearner && (
+        <div className={s.modalOverlay} onClick={closeStatusModal}>
+          <div className={s.modalBox} onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="status-modal-h">
+            <div id="status-modal-h" className={s.modalTitle}>Update Status</div>
+            <div className={s.modalSubtitle}>Learner: {statusModalLearner.name || statusModalLearner.email}</div>
+
+            <label className={s.modalLabel} htmlFor="status-modal-select">Account Status</label>
+            <select
+              id="status-modal-select"
+              className={s.modalSelect}
+              value={statusModalValue}
+              onChange={e => setStatusModalValue(e.target.value)}
+              disabled={savingStatus}
+            >
+              {STATUS_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+
+            <div className={s.modalActions}>
+              <button className={s.modalBtnCancel} onClick={closeStatusModal} disabled={savingStatus}>
+                Cancel
+              </button>
+              <button className={s.modalBtnSave} onClick={handleSaveStatus} disabled={savingStatus}>
+                {savingStatus ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
