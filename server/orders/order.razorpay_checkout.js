@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import Order from './order.model.js';
 import Organization from '../organizations/organization.model.js';
 import { createCourseOrder, fulfilCourseOrder } from './order.course_purchase.js';
+import { getGstPercent } from '../settings/setting.service.js';
 import { createRazorpayOrder, isValidPaymentSignature, razorpayPublicConfig } from './razorpay.js';
 
 // Store owner cart → Razorpay Checkout.
@@ -74,7 +75,9 @@ async function checkoutPrefill(orgId) {
 export async function startRazorpayCheckout({ orgId, items }) {
     const config = razorpayPublicConfig();
     await expireStaleCheckouts(orgId);
-    const order = await createCourseOrder({ orgId, items, gateway: GATEWAY });
+    // The amount charged is the course amount plus GST (the super admin's GST %, default 18).
+    const gstRate = (await getGstPercent()) / 100;
+    const order = await createCourseOrder({ orgId, items, gateway: GATEWAY, gstRate });
 
     // Nothing to charge (every course free): Razorpay can't take Rs. 0 — complete it now.
     const amountPaise = Math.round(order.credit_amount * 100);

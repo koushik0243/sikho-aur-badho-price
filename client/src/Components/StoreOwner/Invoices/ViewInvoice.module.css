@@ -83,6 +83,31 @@
   overflow: hidden;
 }
 
+/* "Purchased Courses" sits in its own card, joined directly below the invoice card.
+   Tripled classes: DetailKit's doubled .detailCardWide sets the radius and border. */
+.coursesCard {
+  padding: 18px 22px 20px;
+}
+
+.coursesCard.coursesCard.coursesCard {
+  margin-top: 0;
+  border-top: none;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.joinedTop.joinedTop.joinedTop {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* OrderCourseItems draws its own top border; inside its own card it isn't needed. */
+.coursesCard > section {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
 /* ─── Detail head ─────────────────────────────────────────────── */
 .detailHead {
   display: flex;

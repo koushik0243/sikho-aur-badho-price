@@ -18,8 +18,13 @@ const OrderSchema = new Schema({
   order_type:      { type: String, enum: ['credit', 'course'], default: 'credit' },
   credit_id:       { type: Schema.Types.ObjectId, ref: 'Credit', required: function () { return this.order_type !== 'course'; } },
   items:           { type: [OrderItemSchema], default: undefined },
-  // The order's total amount (Rs.) — for course orders, the sum of the items' line totals.
+  // The order's total amount (Rs.) — what was charged. For course orders: the sum of the
+  // items' line totals plus GST (gst_amount), if any.
   credit_amount:   { type: Number, required: true, default: 0 },
+  // GST on a course order: the rate (0.18 = 18%) and the amount (Rs.) included in
+  // credit_amount. 0 for orders without GST (older orders, super admin purchases).
+  gst_rate:        { type: Number, default: 0, min: 0 },
+  gst_amount:      { type: Number, default: 0, min: 0 },
   purchase_date:   { type: Date, default: Date.now },
   payment_gateway: { type: String, default: 'manual' },
   // Super admin "Add Organization Course": how the organization paid, and the details

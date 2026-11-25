@@ -1,12 +1,15 @@
 'use client';
 
 import { orderCourseItems } from '../../lib/orderDisplay';
-import { formatPrice } from '../StoreOwner/Cart/cartFormat';
+import { formatPrice, formatPercent } from '../StoreOwner/Cart/cartFormat';
 import s from './OrderCourseItems.module.css';
 
 /** The courses in a course purchase order (order / invoice pages, and the payment summary). */
 export default function OrderCourseItems({ order, title = 'Purchased Courses' }) {
   const items = orderCourseItems(order);
+  // credit_amount includes GST on orders that have it (gst_amount > 0).
+  const gstAmount = Number(order?.gst_amount) || 0;
+  const courseAmount = Math.round(((Number(order?.credit_amount) || 0) - gstAmount) * 100) / 100;
   return (
     <section className={s.wrap} aria-labelledby="order-courses-title">
       <h2 id="order-courses-title" className={s.title}>{title}</h2>
@@ -33,6 +36,18 @@ export default function OrderCourseItems({ order, title = 'Purchased Courses' })
             ))}
           </tbody>
           <tfoot>
+            {gstAmount > 0 && (
+              <>
+                <tr>
+                  <td colSpan={4} className={s.totalLabel}>Course amount</td>
+                  <td className={s.num}>{formatPrice(courseAmount)}</td>
+                </tr>
+                <tr>
+                  <td colSpan={4} className={s.totalLabel}>GST ({formatPercent((Number(order?.gst_rate) || 0) * 100)}%)</td>
+                  <td className={s.num}>{formatPrice(gstAmount)}</td>
+                </tr>
+              </>
+            )}
             <tr>
               <td colSpan={4} className={s.totalLabel}>Total</td>
               <td className={`${s.num} ${s.total}`}>{formatPrice(order?.credit_amount)}</td>

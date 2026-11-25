@@ -103,7 +103,9 @@ export default function ViewInvoice() {
         <span className={vp.breadcrumbCurr}>{inv.invoice_no || 'Invoice'}</span>
       </nav>
 
-      <div className={vp.detailCardWide}>
+      {/* One wrapper so the shell's flex gap doesn't separate the invoice card from the courses card. */}
+      <div>
+      <div className={`${vp.detailCardWide} ${isCourseOrder(inv.order_id) ? vp.joinedTop : ''}`}>
         <div className={vp.detailHead}>
           <div className={vp.detailHeadLeft}>
             <div className={vp.detailAvatarAmber}>INV</div>
@@ -197,8 +199,14 @@ export default function ViewInvoice() {
             </div>
           )}
         </div>
-        {/* Course purchase: the courses as bought (price per learner as paid, never today's price). */}
-        {isCourseOrder(inv.order_id) && <OrderCourseItems order={inv.order_id} />}
+      </div>
+
+      {/* Course purchase: the courses as bought (price per learner as paid, never today's price). */}
+      {isCourseOrder(inv.order_id) && (
+        <div className={`${vp.detailCardWide} ${vp.coursesCard}`}>
+          <OrderCourseItems order={inv.order_id} />
+        </div>
+      )}
       </div>
     </>
   );

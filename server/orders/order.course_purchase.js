@@ -123,13 +123,16 @@ export function parsePayment({ paymentMode, paymentDetails } = {}) {
 /**
  * Saves a course order for a cart, priced from the courses (not yet carried out — see
  * fulfilCourseOrder). `status` is 'pending' while it waits for an online payment.
+ * With a `gstRate`, GST on the course amount is added to the order total (credit_amount).
  * @param {{ orgId: string, items: Array<{ courseId: string, learners: number }>, gateway: string,
- *           payment?: { mode: string, details: string } | null }} input
+ *           payment?: { mode: string, details: string } | null, gstRate?: number }} input
  */
-export async function createCourseOrder({ orgId, items: rawItems, gateway, payment = null }) {
+export async function createCourseOrder({ orgId, items: rawItems, gateway, payment = null, gstRate = 0 }) {
     if (!orgId || !ObjectId.isValid(orgId)) throw badRequest('Your account is not linked to an organization.');
     const items = await priceItems(parseCartItems(rawItems));
-    const total = round2(items.reduce((sum, i) => sum + i.line_total, 0));
+    const subTotal = round2(items.reduce((sum, i) => sum + i.line_total, 0));
+    const gstAmount = round2(subTotal * gstRate);
+    const total = round2(subTotal + gstAmount);
 
     // Seat records first: one created later would count this order's learners from the
     // order AND from fulfilCourseOrder's increment.
@@ -140,6 +143,8 @@ export async function createCourseOrder({ orgId, items: rawItems, gateway, payme
         order_type: 'course',
         items,
         credit_amount: total,
+        gst_rate: gstAmount > 0 ? gstRate : 0,
+        gst_amount: gstAmount,
         purchase_date: new Date(),
         payment_gateway: gateway,
         payment_mode: payment?.mode || null,
@@ -186,14 +191,15 @@ export async function purchaseCourses({ orgId, items, payment = null }) {
 async function createPaidInvoice(order) {
     const org = await Organization.findById(order.organizer_id).lean();
     const rand = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+    const gstAmount = order.gst_amount || 0;
     await new Invoice({
         org_id:         order.organizer_id,
         order_id:       order._id,
         invoice_no:     `INV-${Date.now()}-${rand}`,
         currency:       'INR',
-        sub_total:      order.credit_amount,
+        sub_total:      round2(order.credit_amount - gstAmount),
         discount:       0,
-        tax:            0,
+        tax:            gstAmount,
         total_amount:   order.credit_amount,
         payment_status: 'paid',
         payment_method: order.razorpay_payment_id ? 'razorpay' : (order.payment_mode || PAYMENT_GATEWAY),

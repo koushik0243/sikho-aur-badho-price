@@ -667,6 +667,27 @@
 
 .userMenuLogout:hover { background: #fff1f1; color: #dc2626; }
 
+/* "Edit Profile": same row as Logout, neutral (teal) hover instead of red. */
+.userMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #374151;
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.userMenuItem:hover { background: #f0f9f8; color: #0b7b7b; }
+
+.userMenuItem:focus-visible,
+.userMenuLogout:focus-visible { outline: 2px solid #0b7b7b; outline-offset: -2px; }
+
 
 
 .userMenuLogoutIcon {

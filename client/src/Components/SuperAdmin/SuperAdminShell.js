@@ -228,6 +228,11 @@ const Icon = {
       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
     </svg>
   ),
+  editProfile: (
+    <svg viewBox="0 0 20 20" fill="currentColor">
+      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+    </svg>
+  ),
   logout: (
     <svg viewBox="0 0 20 20" fill="currentColor">
       <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
@@ -510,6 +515,13 @@ export default function SuperAdminShell({ children, activeSection = 'dashboard' 
                     </div>
                   </div>
                   <div className={s.userMenuDivider} />
+                  {user?._id && (
+                    <button type="button" className={s.userMenuItem}
+                      onClick={() => { setUserMenuOpen(false); router.push(`/superadmin/user/${user._id}/edit`); }}>
+                      <span className={s.userMenuLogoutIcon}>{Icon.editProfile}</span>
+                      Edit Profile
+                    </button>
+                  )}
                   <button className={s.userMenuLogout} onClick={handleLogout}>
                     <span className={s.userMenuLogoutIcon}>{Icon.logout}</span>
                     Logout

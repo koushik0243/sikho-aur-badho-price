@@ -18,3 +18,9 @@ export function formatPrice(n) {
 
 /** Row total in rupees, rounded to paise the same way the server does. */
 export const lineTotal = (unitPrice, learners) => Math.round(unitPrice * learners * 100) / 100;
+
+/** GST in rupees on `amount` at `percent` (e.g. 18), rounded to paise the same way the server does. */
+export const gstOn = (amount, percent) => Math.round(amount * (percent / 100) * 100) / 100;
+
+/** "18" / "12.5" — a GST percent without trailing zeros. */
+export const formatPercent = (percent) => String(Math.round((Number(percent) || 0) * 100) / 100);

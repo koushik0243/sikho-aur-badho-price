@@ -8,7 +8,7 @@ import { selectUser } from '../../../redux/slices/authSlice';
 import apiServiceHandler from '../../../service/apiService';
 import { useStoreCart, clampLearners, MAX_LEARNERS_PER_ITEM } from '../../../lib/storeCart';
 import { kit as k, PageHeader, Card, Pill, KitIcon } from '../PageKit/PageKit';
-import { coursePrice, formatPrice, lineTotal } from './cartFormat';
+import { coursePrice, formatPrice, lineTotal, gstOn, formatPercent } from './cartFormat';
 import { openRazorpayCheckout } from '../../../lib/razorpayCheckout';
 import s from './Cart.module.css';
 
@@ -42,6 +42,21 @@ export default function Cart() {
   const [payStep, setPayStep] = useState('');   // what's happening while paying, for the button
   // Razorpay: { configured, mode: 'test' | 'live' } — test keys = sandbox, live keys = real money.
   const [gateway, setGateway] = useState(null);
+  // GST % set by the super admin (null while loading; checkout waits for it).
+  const [gstPercent, setGstPercent] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    apiServiceHandler('GET', 'setting/gst')
+      .then(res => {
+        const n = Number(res?.data?.gst_percent);
+        if (cancelled) return;
+        if (Number.isFinite(n) && n >= 0) setGstPercent(n);
+        else toast.warning('Could not load the GST rate. Please refresh the page.');
+      })
+      .catch(() => { if (!cancelled) toast.warning('Could not load the GST rate. Please refresh the page.'); });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,6 +79,8 @@ export default function Cart() {
   }, []);
 
   const loading = courses === null;
+  const gstReady = gstPercent !== null;
+  const amountsReady = !loading && gstReady;
   const byId = new Map((courses || []).map(c => [String(c._id), c]));
   const rows = cart.items.map(item => {
     const course = byId.get(item.courseId);
@@ -75,10 +92,13 @@ export default function Cart() {
   const available = rows.filter(priced);
   const unavailable = loading ? 0 : rows.length - available.length;
   const totalLearners = available.reduce((n, r) => n + r.learners, 0);
-  const grandTotal = Math.round(available.reduce((n, r) => n + r.total, 0) * 100) / 100;
+  // Same sums as the server: course amount + GST on it = what Razorpay charges.
+  const courseAmount = Math.round(available.reduce((n, r) => n + r.total, 0) * 100) / 100;
+  const gstAmount = gstOn(courseAmount, gstPercent ?? 0);
+  const grandTotal = Math.round((courseAmount + gstAmount) * 100) / 100;
   const needsPayment = grandTotal > 0;
   const paymentReady = !needsPayment || gateway?.configured === true;
-  const canPlace = !loading && !placing && available.length > 0 && unavailable === 0 && gateway !== null && paymentReady;
+  const canPlace = amountsReady && !placing && available.length > 0 && unavailable === 0 && gateway !== null && paymentReady;
 
   function orderPlaced(orderId, message) {
     cart.clear();
@@ -230,9 +250,14 @@ export default function Cart() {
           <dl className={s.summary}>
             <div className={s.summaryRow}><dt>Courses</dt><dd>{available.length}</dd></div>
             <div className={s.summaryRow}><dt>Total learners</dt><dd>{totalLearners}</dd></div>
+            <div className={s.summaryRow}><dt>Course amount</dt><dd>{loading ? '—' : formatPrice(courseAmount)}</dd></div>
+            <div className={s.summaryRow}>
+              <dt>GST{gstReady ? ` (${formatPercent(gstPercent)}%)` : ''}</dt>
+              <dd>{amountsReady ? formatPrice(gstAmount) : '—'}</dd>
+            </div>
             <div className={`${s.summaryRow} ${s.summaryTotal}`}>
               <dt>Total amount</dt>
-              <dd>{loading ? '—' : formatPrice(grandTotal)}</dd>
+              <dd>{amountsReady ? formatPrice(grandTotal) : '—'}</dd>
             </div>
           </dl>
           {unavailable > 0 && (
@@ -246,7 +271,7 @@ export default function Cart() {
             </p>
           )}
           <button type="button" className={`${k.btnPrimary} ${s.placeBtn}`} disabled={!canPlace} onClick={placeOrder}>
-            {placing ? (payStep || 'Please wait…') : needsPayment ? `Pay ${loading ? '' : formatPrice(grandTotal)}` : 'Place Order'}
+            {placing ? (payStep || 'Please wait…') : needsPayment ? `Pay ${amountsReady ? formatPrice(grandTotal) : ''}` : 'Place Order'}
           </button>
           <p className={s.summaryNote}>
             {needsPayment

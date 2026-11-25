@@ -70,6 +70,7 @@ import organizationSignupRouter from './organization_signup/organization_signup.
 import orgDashboardRouter from './org_dashboard/org_dashboard.controller.js';
 import adminDashboardRouter from './admin_dashboard/admin_dashboard.controller.js';
 import activityLogRouter from './activity_log/activity_log.controller.js';
+import settingRouter from './settings/setting.controller.js';
 
 const app = express();
 // Gzip/deflate every response above ~1KB (JSON list/pagination payloads are the main
@@ -168,6 +169,8 @@ app.use('/signup', organizationSignupRouter);
 app.use('/org-dashboard', protect, allowAccounts({ read: [SUPERADMIN, STORE_OWNER], write: [STORE_OWNER] }), orgDashboardRouter);
 app.use('/admin-dashboard', protect, requireSuperAdmin, adminDashboardRouter);
 app.use('/activity-log', protect, allowAccounts({ read: ALL_ACCOUNTS, write: ALL_ACCOUNTS }), activityLogRouter);
+// Platform settings: GST % (store owners read it for the cart; super admin changes it on Edit User).
+app.use('/setting', protect, allowAccounts({ read: [SUPERADMIN, STORE_OWNER], write: [SUPERADMIN] }), settingRouter);
 app.use('/user', userRouter);
 
 app.use((error, req, res, next) => {

@@ -28,6 +28,20 @@ export default function EditUser() {
   const [submitting, setSubmitting] = useState(false);
   const [pwReadOnly, setPwReadOnly] = useState(true);
   const [confirmPwReadOnly, setConfirmPwReadOnly] = useState(true);
+  // Platform-wide GST % charged at the store owner's cart checkout (not part of the user).
+  const [gst, setGst]           = useState('');
+  const [savedGst, setSavedGst] = useState(null); // null until loaded; not saved then
+
+  useEffect(() => {
+    apiServiceHandler('GET', 'setting/gst')
+      .then(res => {
+        const n = Number(res?.data?.gst_percent);
+        if (!Number.isFinite(n)) throw new Error('bad GST');
+        setGst(String(n));
+        setSavedGst(n);
+      })
+      .catch(() => toast.warning('Failed to load the GST rate.'));
+  }, []);
 
   useEffect(() => {
     apiServiceHandler('GET', 'role/list-pagination?limit=200&page=1&user_type=superadmin')
@@ -68,6 +82,10 @@ export default function EditUser() {
       if (form.password.length < 6) e.password = 'Minimum 6 characters.';
       else if (form.password !== form.confirm_password) e.confirm_password = 'Passwords do not match.';
     }
+    if (savedGst !== null) {
+      const n = Number(gst);
+      if (String(gst).trim() === '' || !Number.isFinite(n) || n < 0 || n > 100) e.gst = 'Enter a GST rate from 0 to 100.';
+    }
     return e;
   }
 
@@ -87,6 +105,11 @@ export default function EditUser() {
       };
       if (form.password) payload.password = form.password;
       await apiServiceHandler('PUT', `user/admin/update/${id}`, payload);
+      const gstNum = Math.round(Number(gst) * 100) / 100;
+      if (savedGst !== null && gstNum !== savedGst) {
+        await apiServiceHandler('PUT', 'setting/gst', { gst_percent: gstNum });
+        setSavedGst(gstNum);
+      }
       toast.success('User updated successfully.');
       router.push('/superadmin/user');
     } catch (err) {
@@ -183,6 +206,25 @@ export default function EditUser() {
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
               </select>
+            </div>
+
+            <div className={s.formGroup}>
+              <label htmlFor="gst-percent">GST (%)</label>
+              <input
+                id="gst-percent"
+                className={s.input}
+                type="number"
+                inputMode="decimal"
+                min="0"
+                max="100"
+                step="0.01"
+                placeholder="18"
+                value={gst}
+                disabled={savedGst === null}
+                onChange={e => setGst(e.target.value)}
+              />
+              <p className={s.hint}>Added to the course amount at the store owner&apos;s cart checkout. Applies to every store owner.</p>
+              {errors.gst && <p className={s.errorMsg}>{errors.gst}</p>}
             </div>
 
             <div className={s.formActions}>
