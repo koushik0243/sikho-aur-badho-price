@@ -585,6 +585,21 @@ export default function AddCourseBuilder({ editId } = {}) {
     setQaChecked(new Set()); // ticks on the previous lesson's questions would be hidden
   }
 
+  // Questions moved back from Selected Questions land in the picked lesson's Generated QA.
+  // One with no lesson of this chapter (it would otherwise fall under "Other questions")
+  // is filed under the picked lesson, and that is saved. One from another lesson of this
+  // chapter keeps its own lesson.
+  function fileUnderPickedLesson(qs) {
+    const lessonIds = new Set(quizLessonsOf(quizModal?.chIdx).map(l => String(l.serverId)));
+    if (!lessonIds.has(quizLessonId)) return qs; // no real lesson picked
+    const orphans = qs.filter(q => lessonKeyOf(q, lessonIds) === OTHER_LESSON_QA);
+    if (!orphans.length) return qs;
+    const orphanIds = new Set(orphans.map(q => String(q._id)));
+    Promise.all(orphans.map(q => apiServiceHandler('PUT', `quiz-questions/update/${q._id}`, { lessonId: quizLessonId })))
+      .catch(() => toast.warning('Some questions could not be filed under this lesson. They may show under "Other questions" after reopening.'));
+    return qs.map(q => (orphanIds.has(String(q._id)) ? { ...q, lessonId: quizLessonId } : q));
+  }
+
   // Chapters hold at most one quiz (also enforced by the server).
   const chapterHasQuiz = (ch) => (ch?.quizzes?.length || 0) > 0;
 
@@ -4665,8 +4680,9 @@ export default function AddCourseBuilder({ editId } = {}) {
               setFinalSelected(prev => prev.filter(x => !ids.has(String(x._id))));
               setFinalPool(prev => sortByDifficulty([...prev, ...qs]));
             } else {
+              const moved = fileUnderPickedLesson(qs);
               setQuizQASelected(prev => prev.filter(x => !ids.has(String(x._id))));
-              setQuizQAPool(prev => sortByDifficulty([...prev, ...qs]));
+              setQuizQAPool(prev => sortByDifficulty([...prev, ...moved]));
             }
             setQaCheckedMany([...ids], false);
             setQaToUnselect(null);

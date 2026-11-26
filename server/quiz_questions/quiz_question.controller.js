@@ -58,6 +58,11 @@ const editQuizQuestion = async (req, res, next) => {
 
 const updateQuizQuestion = async (req, res, next) => {
     try {
+        // lessonId may be set to a lesson or cleared (null) — anything else is refused.
+        const { lessonId } = req.body;
+        if (lessonId !== undefined && lessonId !== null && !mongoose.isValidObjectId(lessonId)) {
+            return res.status(400).json({ status: 400, message: "Invalid lesson id." });
+        }
         const data = await QuizQuestionHelper.updateQuestion(req.params.id, req.body);
         res.status(200).json({ status: 200, message: "Successfully updated.", data });
     } catch (error) {

@@ -187,7 +187,7 @@ export const updateQuestion = async (updateId, data) => {
   try {
     const fields = [
       'courseId', 'chapterId', 'quizId', 'question', 'answer',
-      'options', 'difficulty', 'explanation', 'batchNumber'
+      'options', 'difficulty', 'explanation', 'batchNumber', 'lessonId'
     ];
     const updateFields = {};
     for (const field of fields) {
